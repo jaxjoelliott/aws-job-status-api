@@ -81,7 +81,8 @@ resource "aws_iam_policy" "worker_lambda_policy" {
       {
         Action = [
           "dynamodb:GetItem",
-          "dynamodb:PutItem"
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem"
         ]
         Effect   = "Allow"
         Resource = aws_dynamodb_table.jobs.arn
@@ -89,7 +90,8 @@ resource "aws_iam_policy" "worker_lambda_policy" {
       {
         Action = [
           "sqs:ReceiveMessage",
-          "sqs:DeleteMessage"
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
         ]
         Effect   = "Allow"
         Resource = aws_sqs_queue.job_queue_dev.arn
