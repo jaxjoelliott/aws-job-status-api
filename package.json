@@ -8,7 +8,7 @@
     "test": "tests"
   },
   "scripts": {
-    "build": "tsc && rm -f lambda/submit.zip lambda/worker.zip && zip -j lambda/submit.zip dist/handlers/submit.js && zip -j lambda/worker.zip dist/handlers/worker.js",
+    "build": "tsc && rm -f lambda/submit.zip lambda/worker.zip lambda/getJobStatus.zip && zip -j lambda/submit.zip dist/handlers/submit.js && zip -j lambda/worker.zip dist/handlers/worker.js && zip -j lambda/getJobStatus.zip dist/handlers/getJobStatus.js",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts"
   },

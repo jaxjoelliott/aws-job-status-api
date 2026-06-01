@@ -11,8 +11,8 @@ resource "aws_lambda_function" "submit_lambda" {
       variables = {
         QUEUE_URL  = aws_sqs_queue.job_queue_dev.url
         TABLE_NAME = aws_dynamodb_table.jobs.name
+    }
   }
-}
 }
 
 resource "aws_lambda_function" "worker_lambda" {
@@ -28,8 +28,25 @@ resource "aws_lambda_function" "worker_lambda" {
     environment {
       variables = {
         TABLE_NAME = aws_dynamodb_table.jobs.name
+    }
   }
 }
+
+resource "aws_lambda_function" "getJobStatus_lambda" {
+  function_name = "getJobStatus-lambda"
+  role          = aws_iam_role.getJobStatus_lambda_role.arn
+  handler       = "getJobStatus.handler"
+  runtime       = "nodejs22.x"
+
+  filename      = "${path.module}/../lambda/getJobStatus.zip"
+  timeout = 3
+
+  source_code_hash = filebase64sha256("${path.module}/../lambda/getJobStatus.zip")
+    environment {
+      variables = {
+        TABLE_NAME = aws_dynamodb_table.jobs.name
+    }
+  }
 }
 
 resource "aws_lambda_event_source_mapping" "sqs_trigger" {

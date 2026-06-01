@@ -57,7 +57,6 @@ export const handler = async (event: SQSEvent): Promise<void> => {
       );
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      // 5. update status to COMPLETED
       await dynamo.send(
         new UpdateCommand({
           TableName: process.env.TABLE_NAME,
