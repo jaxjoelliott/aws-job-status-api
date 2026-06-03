@@ -33,14 +33,14 @@ export const handler = async (event: SQSEvent): Promise<void> => {
         );
         continue;
       }
-      if (job.status === "COMPLETED" || job.status === "PROCESSING") {
+      if (job?.status === "COMPLETED" || job?.status === "PROCESSING") {
         console.log(
           JSON.stringify({
             level: "INFO",
             function: "worker.handler",
             message: "Job already processed or in progress, skipping",
             jobId: jobId,
-            status: job.status,
+            status: job?.status,
           }),
         );
         continue;
@@ -84,5 +84,6 @@ export const handler = async (event: SQSEvent): Promise<void> => {
         error: error instanceof Error ? error.message : "Unknown error",
       }),
     );
+    throw Error("Unexpected error processing job");
   }
 };
