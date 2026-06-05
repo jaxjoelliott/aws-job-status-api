@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc && rm -f lambda/submit.zip lambda/worker.zip lambda/getJobStatus.zip && zip -j lambda/submit.zip dist/handlers/submit.js && zip -j lambda/worker.zip dist/handlers/worker.js && zip -j lambda/getJobStatus.zip dist/handlers/getJobStatus.js",
     "lint": "eslint src/**/*.ts",
-    "format": "prettier --write src/**/*.ts"
+    "format": "prettier --write src/**/*.ts",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -27,12 +28,15 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/aws-lambda": "^8.10.161",
+    "@types/jest": "^30.0.0",
     "@types/node": "^25.9.1",
     "@typescript-eslint/eslint-plugin": "^8.60.0",
     "@typescript-eslint/parser": "^8.60.0",
     "eslint": "^10.4.1",
     "eslint-config-prettier": "^10.1.8",
+    "jest": "^30.4.2",
     "prettier": "^3.8.3",
+    "ts-jest": "^29.4.11",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.60.0"
   },
@@ -40,5 +44,9 @@
     "@aws-sdk/client-dynamodb": "^3.1057.0",
     "@aws-sdk/client-sqs": "^3.1057.0",
     "@aws-sdk/lib-dynamodb": "^3.1057.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node"
   }
 }
