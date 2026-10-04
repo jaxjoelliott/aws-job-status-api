@@ -22,10 +22,11 @@ flowchart LR
     Submit -->|PutItem: PENDING| DB
     Submit -->|SendMessage| Queue
     Queue -->|event source mapping| Worker
-    Worker -->|PROCESSING → COMPLETED| DB
+    Worker -->|PROCESSING → COMPLETED / FAILED| DB
     Status -->|GetItem| DB
     Queue -.->|after 3 failed receives| DLQ
     DLQ -.-> Alarm
+    Alarm -.-> SNS["SNS topic"]
 ```
 
 ## Sequence: submit and poll
@@ -44,7 +45,7 @@ sequenceDiagram
     S->>Q: SendMessage {jobId}
     S-->>C: 202 {jobId}
     Q->>W: deliver message
-    W->>D: GetItem (skip if PROCESSING/COMPLETED)
+    W->>D: GetItem (skip if COMPLETED/FAILED)
     W->>D: UpdateItem (PROCESSING)
     W->>D: UpdateItem (COMPLETED)
     C->>G: GET /jobs/{jobId}

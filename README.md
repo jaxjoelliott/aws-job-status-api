@@ -48,7 +48,7 @@ See [docs/architecture-diagram.md](docs/architecture-diagram.md) for the full di
 { "type": "your-job-type" }
 ```
 
-**Job status values:** `PENDING` → `PROCESSING` → `COMPLETED`
+**Job status values:** `PENDING` → `PROCESSING` → `COMPLETED` (or `FAILED` if all 3 processing attempts fail)
 
 **Poll response:**
 ```json
@@ -91,17 +91,19 @@ Each Lambda function has its own role scoped to only the permissions it requires
 
 | Function | DynamoDB | SQS |
 |----------|----------|-----|
-| submit | `PutItem` | `SendMessage` |
+| submit | `PutItem`, `DeleteItem` | `SendMessage` |
 | worker | `GetItem`, `UpdateItem`, `PutItem` | `ReceiveMessage`, `DeleteMessage`, `GetQueueAttributes` |
 | getJobStatus | `GetItem` | — |
 
 ## Error Handling
 
-- Invalid requests return `400` with a descriptive message (missing `type` on submit, missing `jobId` on poll)
+- Invalid requests return `400` with a descriptive message (missing `type` or malformed JSON on submit, missing `jobId` on poll)
+- If queueing fails after the job is written, `submit` deletes the job and returns `500`, so no orphaned `PENDING` jobs are left behind
 - Jobs not found return `404`
-- The worker is idempotent: jobs already `PROCESSING` or `COMPLETED` are skipped on redelivery
-- Worker failures are retried up to 3 times via SQS visibility timeout before routing to the DLQ
-- A CloudWatch alarm fires when the DLQ receives any message
+- Worker status updates are conditional, and finished jobs (`COMPLETED`/`FAILED`) are skipped on redelivery
+- A job left in `PROCESSING` by a crashed attempt is retried on redelivery, not skipped
+- Worker failures are retried up to 3 times (queue visibility timeout 180s) before routing to the DLQ; on the final attempt the job is marked `FAILED`
+- A CloudWatch alarm fires when the DLQ receives any message and publishes to an SNS topic (set `alarm_email` to subscribe an address)
 - All handlers emit structured JSON logs
 
 ## Local Development
@@ -127,5 +129,5 @@ npm run build
 # 2. Deploy infrastructure
 cd terraform
 terraform init
-terraform apply
+terraform apply -var alarm_email=you@example.com   # alarm_email is optional
 ```

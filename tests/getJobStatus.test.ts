@@ -26,7 +26,7 @@ describe("getJobStatus handler", () => {
     } as any;
     const response = await handler(event);
     expect(response.statusCode).toBe(200);
-    const body = JSON.parse(response.body);
+    const body = JSON.parse(response.body as string);
     expect(body.status).toBe("COMPLETED");
   });
   test("missing jobId returns 400", async () => {
@@ -35,7 +35,7 @@ describe("getJobStatus handler", () => {
     } as any;
     const response = await handler(event);
     expect(response.statusCode).toBe(400);
-    const body = JSON.parse(response.body);
+    const body = JSON.parse(response.body as string);
     expect(body.message).toBe("Missing required field: jobId");
   });
   test("job not found returns 404", async () => {
@@ -47,7 +47,7 @@ describe("getJobStatus handler", () => {
     } as any;
     const response = await handler(event);
     expect(response.statusCode).toBe(404);
-    const body = JSON.parse(response.body);
+    const body = JSON.parse(response.body as string);
     expect(body.message).toBe("Job not found");
   });
 });

@@ -20,14 +20,15 @@ resource "aws_iam_role" "submit_lambda_role" {
 resource "aws_iam_policy" "submit_lambda_policy" {
   name        = "submit-lambda-policy"
   path        = "/"
-  description = "Policy for submit Lambda to allow PutItem and sendMessage"
+  description = "Policy for submit Lambda to allow PutItem, DeleteItem and SendMessage"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Action = [
-          "dynamodb:PutItem"
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem"
         ]
         Effect   = "Allow"
         Resource = aws_dynamodb_table.jobs.arn
