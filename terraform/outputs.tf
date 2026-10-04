@@ -1,3 +1,3 @@
 output "api_url" {
-  value = aws_apigatewayv2_api.job_status_api.api_endpoint
+  value = var.use_localstack ? null : aws_apigatewayv2_api.job_status_api[0].api_endpoint
 }

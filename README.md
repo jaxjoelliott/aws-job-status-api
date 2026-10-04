@@ -79,6 +79,10 @@ tests/
   submit.test.ts         # Jest unit tests for submit handler
   getJobStatus.test.ts   # Jest unit tests for getJobStatus handler
   worker.test.ts         # Jest unit tests for worker handler
+scripts/
+  localstack-deploy.sh   # Deploy the stack to LocalStack
+  localstack-smoke.sh    # End-to-end smoke test against LocalStack
+docker-compose.yml       # LocalStack
 docs/
   architecture-diagram.md  # Mermaid architecture + sequence diagrams
   architecture.md          # Design notes
@@ -116,6 +120,21 @@ npm test         # Jest unit tests (AWS SDK clients are mocked)
 ```
 
 CI (`.github/workflows/ci.yml`) runs lint, build, and test on every push and pull request.
+
+## Run Locally with LocalStack (no AWS account needed)
+
+Requires Docker and the AWS CLI.
+
+```bash
+./scripts/localstack-deploy.sh   # builds, starts LocalStack, applies Terraform to it
+./scripts/localstack-smoke.sh    # submit -> SQS -> worker -> COMPLETED end to end
+docker compose down              # tear down
+```
+
+Notes:
+- Uses the free community image (`localstack/localstack:4.14`). Newer LocalStack images require an account token.
+- API Gateway HTTP APIs (apigatewayv2) are a LocalStack Pro feature, so with `use_localstack=true` the API Gateway resources are skipped and the smoke test invokes the Lambdas directly with HTTP API-shaped events. Everything else (Lambda, SQS + DLQ redrive, DynamoDB, IAM, SNS, CloudWatch) is created from the same Terraform used for real AWS.
+- The deploy script works in a throwaway `terraform-local/` copy that swaps the S3 backend for local state.
 
 ## Deploy
 

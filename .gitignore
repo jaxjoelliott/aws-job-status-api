@@ -102,3 +102,6 @@ postman/job-tracker-dev.json
 # IDE
 .idea/
 .vscode-test
+
+# LocalStack working copy
+terraform-local/

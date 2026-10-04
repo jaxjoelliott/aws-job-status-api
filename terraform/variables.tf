@@ -9,3 +9,15 @@ variable "alarm_email" {
   type        = string
   default     = ""
 }
+
+variable "use_localstack" {
+  description = "Point the AWS provider at LocalStack instead of real AWS."
+  type        = bool
+  default     = false
+}
+
+variable "localstack_endpoint" {
+  description = "LocalStack edge endpoint, used when use_localstack is true."
+  type        = string
+  default     = "http://localhost:4566"
+}
