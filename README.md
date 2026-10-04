@@ -2,30 +2,29 @@
 
 A serverless async job processing API built on AWS. Clients submit jobs via HTTP and poll for status — the system decouples submission from processing using SQS, with all state tracked in DynamoDB.
 
+## Problem
+
+Long-running work shouldn't block an HTTP request. This service accepts a job, returns immediately with a `jobId`, processes the job in the background, and lets the client poll for its status. SQS decouples submission from processing, so spikes are buffered and failures are retried automatically.
+
 ## Architecture
 
+```mermaid
+flowchart LR
+    Client([Client])
+    POST["POST /jobs"] --> Submit["submit Lambda"]
+    GET["GET /jobs/{jobId}"] --> Status["getJobStatus Lambda"]
+    Client --> POST
+    Client --> GET
+    Submit -->|PENDING| DB[("DynamoDB")]
+    Submit --> Queue[["SQS Queue"]]
+    Queue --> Worker["worker Lambda"]
+    Worker -->|PROCESSING → COMPLETED| DB
+    Status --> DB
+    Queue -.->|3 failed receives| DLQ[["DLQ"]]
+    DLQ -.-> Alarm["CloudWatch Alarm"]
 ```
-POST /jobs                          GET /jobs/{jobId}
-     │                                      │
-     ▼                                      ▼
-API Gateway (HTTP)              API Gateway (HTTP)
-     │                                      │
-     ▼                                      ▼
-submit Lambda                   getJobStatus Lambda
-     │                                      │
-     ├──► DynamoDB (status: PENDING)        ▼
-     │                               DynamoDB (read)
-     ▼
-  SQS Queue
-     │
-     ▼ (event source mapping)
-worker Lambda
-     │
-     ├──► DynamoDB (status: PROCESSING)
-     ├──► ... do work ...
-     └──► DynamoDB (status: COMPLETED)
-          (on failure → DLQ after 3 attempts)
-```
+
+See [docs/architecture-diagram.md](docs/architecture-diagram.md) for the full diagram and request sequence, and [docs/architecture.md](docs/architecture.md) for the original design notes.
 
 ## Tech Stack
 
@@ -77,7 +76,13 @@ terraform/
   iam.tf             # Per-function least-privilege roles + policies
   cloudwatch.tf      # DLQ depth alarm
 tests/
-  submit.test.ts     # Jest unit tests for submit handler
+  submit.test.ts         # Jest unit tests for submit handler
+  getJobStatus.test.ts   # Jest unit tests for getJobStatus handler
+  worker.test.ts         # Jest unit tests for worker handler
+docs/
+  architecture-diagram.md  # Mermaid architecture + sequence diagrams
+  architecture.md          # Design notes
+.github/workflows/ci.yml   # Lint, build, test on every push
 ```
 
 ## IAM Design
@@ -92,11 +97,23 @@ Each Lambda function has its own role scoped to only the permissions it requires
 
 ## Error Handling
 
-- Invalid requests return `400` with a descriptive message
+- Invalid requests return `400` with a descriptive message (missing `type` on submit, missing `jobId` on poll)
 - Jobs not found return `404`
+- The worker is idempotent: jobs already `PROCESSING` or `COMPLETED` are skipped on redelivery
 - Worker failures are retried up to 3 times via SQS visibility timeout before routing to the DLQ
 - A CloudWatch alarm fires when the DLQ receives any message
 - All handlers emit structured JSON logs
+
+## Local Development
+
+```bash
+npm install
+npm run lint     # ESLint
+npm run build    # tsc + zip Lambda bundles into lambda/
+npm test         # Jest unit tests (AWS SDK clients are mocked)
+```
+
+CI (`.github/workflows/ci.yml`) runs lint, build, and test on every push and pull request.
 
 ## Deploy
 

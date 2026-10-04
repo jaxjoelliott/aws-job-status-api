@@ -84,6 +84,6 @@ export const handler = async (event: SQSEvent): Promise<void> => {
         error: error instanceof Error ? error.message : "Unknown error",
       }),
     );
-    throw Error("Unexpected error processing job");
+    throw new Error("Unexpected error processing job", { cause: error });
   }
 };
